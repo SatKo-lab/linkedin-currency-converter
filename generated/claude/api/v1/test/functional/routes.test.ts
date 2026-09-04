@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import app from "../src/app";
+import app from "../../src/app";
 
 describe("routes", () => {
   it("GET /api/v1/health returns a hello world message", async () => {
@@ -17,6 +17,14 @@ describe("routes", () => {
 
   it("GET /api/v1/convert converts between currencies", async () => {
     const res = await app.request("/api/v1/convert?from=USD&to=EUR&amount=100");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("application/json");
+    const body = await res.json();
+    expect(body).toMatchObject({ from: "USD", to: "EUR", amount: 100 });
+  });
+
+  it("GET /api/v1/convert accepts lowercase currency codes", async () => {
+    const res = await app.request("/api/v1/convert?from=usd&to=eur&amount=100");
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toMatchObject({ from: "USD", to: "EUR", amount: 100 });
