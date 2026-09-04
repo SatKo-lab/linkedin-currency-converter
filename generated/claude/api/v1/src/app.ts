@@ -4,8 +4,8 @@ import { currencyRoutes } from "./routes/currency.routes";
 
 export const app = new Hono();
 
-app.route("/", healthRoutes);
-app.route("/", currencyRoutes);
+app.route("/api/v1", healthRoutes);
+app.route("/api/v1", currencyRoutes);
 
 app.notFound((c) => c.json({ error: "Not Found" }, 404));
 
