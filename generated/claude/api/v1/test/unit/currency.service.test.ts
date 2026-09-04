@@ -4,7 +4,7 @@ import {
   InvalidCurrencyError,
   InvalidAmountError,
   UnsupportedConversionError,
-} from "../src/services/currency.service";
+} from "../../src/services/currency.service";
 
 const csv = [
   "country,currency,currency_code,rate,record_date,effective_date",

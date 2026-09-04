@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "linkedin-currency-converter",
   "main": "generated/claude/api/v1/src/index.ts",
-  "compatibility_date": "2026-09-02",
+  "compatibility_date": "2026-08-15",
   "rules": [
     { "type": "Text", "globs": ["**/*.csv"], "fallthrough": true }
   ]
