@@ -16,10 +16,21 @@ function csvAsText(): Plugin {
   };
 }
 
+const SRC_ROOT = "generated/claude/api/v1/src";
 const TEST_ROOT = "generated/claude/api/v1/test";
 
 export default defineConfig({
   test: {
+    // Istanbul instruments source at build time, so it works both for the
+    // Node-pool projects below and for the "integration" project, which runs
+    // inside workerd — the default v8 provider relies on node:inspector,
+    // which workerd only stubs out and cloudflareTest() refuses to run under.
+    coverage: {
+      provider: "istanbul",
+      reporter: ["text", "html", "lcov"],
+      include: [`${SRC_ROOT}/**/*.ts`],
+      exclude: [`${SRC_ROOT}/index.ts`, `${SRC_ROOT}/types/**`],
+    },
     projects: [
       {
         plugins: [csvAsText()],
