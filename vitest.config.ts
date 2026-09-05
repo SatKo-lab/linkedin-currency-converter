@@ -49,7 +49,12 @@ export default defineConfig({
         },
       },
       {
-        plugins: [cloudflareTest({ wrangler: { configPath: "./wrangler.jsonc" } })],
+        plugins: [
+          cloudflareTest({
+            wrangler: { configPath: "./wrangler.jsonc" },
+            miniflare: { bindings: { API_TOKEN: "test-api-token" } },
+          }),
+        ],
         test: {
           name: "integration",
           include: [`${TEST_ROOT}/integration/**/*.test.ts`],

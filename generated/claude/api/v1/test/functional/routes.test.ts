@@ -1,22 +1,33 @@
 import { describe, it, expect } from "vitest";
 import app from "../../src/app";
 
+const TEST_ENV = {
+  API_TOKEN: "test-token",
+  RATE_LIMITER: { limit: async () => ({ success: true }) },
+};
+
+const AUTH_HEADERS = { Authorization: "Bearer test-token" };
+
 describe("routes", () => {
   it("GET /api/v1/health returns a hello world message", async () => {
-    const res = await app.request("/api/v1/health");
+    const res = await app.request("/api/v1/health", { headers: AUTH_HEADERS }, TEST_ENV);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ message: "Hello World" });
   });
 
   it("GET /api/v1/currencies lists the available currencies", async () => {
-    const res = await app.request("/api/v1/currencies");
+    const res = await app.request("/api/v1/currencies", { headers: AUTH_HEADERS }, TEST_ENV);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.currencies).toContain("USD");
   });
 
   it("GET /api/v1/convert converts between currencies", async () => {
-    const res = await app.request("/api/v1/convert?from=USD&to=EUR&amount=100");
+    const res = await app.request(
+      "/api/v1/convert?from=USD&to=EUR&amount=100",
+      { headers: AUTH_HEADERS },
+      TEST_ENV
+    );
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("application/json");
     const body = await res.json();
@@ -24,24 +35,40 @@ describe("routes", () => {
   });
 
   it("GET /api/v1/convert accepts lowercase currency codes", async () => {
-    const res = await app.request("/api/v1/convert?from=usd&to=eur&amount=100");
+    const res = await app.request(
+      "/api/v1/convert?from=usd&to=eur&amount=100",
+      { headers: AUTH_HEADERS },
+      TEST_ENV
+    );
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toMatchObject({ from: "USD", to: "EUR", amount: 100 });
   });
 
   it("GET /api/v1/convert with an unknown currency returns 400", async () => {
-    const res = await app.request("/api/v1/convert?from=XXX&to=USD&amount=10");
+    const res = await app.request(
+      "/api/v1/convert?from=XXX&to=USD&amount=10",
+      { headers: AUTH_HEADERS },
+      TEST_ENV
+    );
     expect(res.status).toBe(400);
   });
 
   it("GET /api/v1/convert with a missing param returns 400", async () => {
-    const res = await app.request("/api/v1/convert?from=USD&to=EUR");
+    const res = await app.request(
+      "/api/v1/convert?from=USD&to=EUR",
+      { headers: AUTH_HEADERS },
+      TEST_ENV
+    );
     expect(res.status).toBe(400);
   });
 
   it("GET /api/v1/convert with a non-USD pair returns 400 (unsupported conversion)", async () => {
-    const res = await app.request("/api/v1/convert?from=CAD&to=EUR&amount=10");
+    const res = await app.request(
+      "/api/v1/convert?from=CAD&to=EUR&amount=10",
+      { headers: AUTH_HEADERS },
+      TEST_ENV
+    );
     expect(res.status).toBe(400);
   });
 
@@ -55,5 +82,28 @@ describe("routes", () => {
     const res = await app.request("/");
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ error: "Not Found" });
+  });
+
+  it("GET /api/v1/health with no Authorization header returns 401", async () => {
+    const res = await app.request("/api/v1/health", undefined, TEST_ENV);
+    expect(res.status).toBe(401);
+  });
+
+  it("GET /api/v1/health with the wrong token returns 401", async () => {
+    const res = await app.request(
+      "/api/v1/health",
+      { headers: { Authorization: "Bearer wrong-token" } },
+      TEST_ENV
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it("GET /api/v1/health returns 429 when the rate limiter rejects the request", async () => {
+    const rateLimitedEnv = {
+      ...TEST_ENV,
+      RATE_LIMITER: { limit: async () => ({ success: false }) },
+    };
+    const res = await app.request("/api/v1/health", { headers: AUTH_HEADERS }, rateLimitedEnv);
+    expect(res.status).toBe(429);
   });
 });
